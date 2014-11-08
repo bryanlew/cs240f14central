@@ -9,14 +9,17 @@ data.
 import math
 
 
+
+
+
 '''
-Produce a count histogram.
+Produce a payment count histogram.
 Input: a dict: int -> [float(actually any)], which is a doctor to a list of
       payments.
 Returns: a dict: int -> int, which is a integer number of payments to the
       number of doctors who received that many payments.
 '''
-def genCountHistogram(d):
+def genPaymentCountHistogram(d):
    hist = dict()
    for k in d:
       numPayments = len(d[k])
@@ -63,11 +66,13 @@ def paymentAmountHistogram(d, binsize):
 
 
 def printStats(filename):
+   # A few variables used for sanity checks
+   NUM_DOCS = 0
+   NUM_COS = 0
    printBadLines = False
+   
    cos = dict() # company -> list of payments made
    docs = dict() # doc/providerId -> list of payments recvd
-
-   
 
    i = 0
    badLines = [] # integer of bad line numbers in data
@@ -90,11 +95,16 @@ def printStats(filename):
          amount = float(s[2])
          if doc not in docs:
             docs[doc] = []
+            NUM_DOCS += 1
          if co not in cos:
             cos[co] = []
+            NUM_COS += 1
          docs[doc].append(amount)
          cos[co].append(amount)
          #print doc, " ", co, " ", amount
+
+   assert(NUM_COS == len(cos))
+   assert(NUM_DOCS == len(docs))
 
    print "==== Results ===="
    print "Bad lines in file (lines excluded): %d" %(len(badLines))
@@ -102,23 +112,30 @@ def printStats(filename):
    print "Num providers/docs: %d" %(len(docs))
    print "Num companies/payers: %d" %(len(cos))
 
-   cosCountHist = genCountHistogram(cos)
-   docsCountHist = genCountHistogram(docs)
+   cosPaymentCountHist = genPaymentCountHistogram(cos)
+   assert(NUM_COS == sum( cosPaymentCountHist.values() ))
+
+   docsPaymentCountHist = genPaymentCountHistogram(docs)
+   assert(NUM_DOCS == sum( docsPaymentCountHist.values() ))
 
    print "cos: Num payments, num companies making that many payments"
-   for k in sorted(cosCountHist):
-      print "%d %d" %(k, cosCountHist[k])
+   for k in sorted(cosPaymentCountHist):
+      print "%d %d" %(k, cosPaymentCountHist[k])
 
    print "docs: Num payments, num doctors recieving that many payments"
-   for k in sorted(docsCountHist):
-      print "%d %d" %(k, docsCountHist[k])
+   for k in sorted(docsPaymentCountHist):
+      print "%d %d" %(k, docsPaymentCountHist[k])
 
    cosSumPayments = sumPayments(cos)
+   assert(NUM_COS == len(cosSumPayments))
    docsSumPayments = sumPayments(docs)
+   assert(NUM_DOCS == len(docsSumPayments))
 
    binsize = 100.
    cosPaymentHist = paymentAmountHistogram(cosSumPayments, binsize)
+   assert(NUM_COS == sum( cosPaymentHist.values() ))
    docsPaymentHist = paymentAmountHistogram(docsSumPayments, binsize)
+   assert(NUM_DOCS == sum( docsPaymentHist.values() ))
 
    print "cos: Payment histogram: payment->+%f, num cos making that much in total payments" %(binsize)
    for k in sorted(cosPaymentHist):
