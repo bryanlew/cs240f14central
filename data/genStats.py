@@ -6,12 +6,14 @@ Generate basic stats about the payment_graph_physician_company.csv
 data.
 '''
 
+import math
+
 
 '''
 Produce a count histogram.
 Input: a dict: int -> [float(actually any)], which is a doctor to a list of
       payments.
-Output: a dict: int -> int, which is a integer number of payments to the
+Returns: a dict: int -> int, which is a integer number of payments to the
       number of doctors who received that many payments.
 '''
 def genCountHistogram(d):
@@ -24,10 +26,48 @@ def genCountHistogram(d):
    return hist
 
 
+'''
+Return a dictionary of the total payments made to/from a doctor/company.
+Input: a dictionary of int(doctor or companyID) -> [float(payments in $)]
+Returns a dict of int(same doctor or companyID as input) -> float (the
+   sum of payments to/from that doctor/company.
+'''
+def sumPayments(d):
+   p = dict()
+   for k in d:
+      p[k] = sum(d[k])
+   return p
+
+
+'''
+Payments to number of doctors in that bin histogram.
+Input: d:  a dict int(doctor/companyID) -> float(total payments a doctor
+   or company recvd/made)
+   binsize: the size of a bin (in dollars, must be > 0).  Bins in the
+      output are upper bounds (so bin 0 represents the number
+      of doctors/companies involved in total payments between
+      0 <= x < binsize
+Output: a binned dict float($) -> int(count), which is the lower bound
+   of a bin (size per input), and the number of doctors/companies who
+   fall in that bin.
+'''
+def paymentAmountHistogram(d, binsize):
+   assert(binsize > 0)
+   out = dict() # float -> int
+   for k in d:
+      binNum = int( d[k] / binsize )
+      if binNum*binsize not in out:
+         out[binNum*binsize] = 0
+      out[binNum*binsize] += 1
+   return out
+
+
 def printStats(filename):
    printBadLines = False
    cos = dict() # company -> list of payments made
    docs = dict() # doc/providerId -> list of payments recvd
+
+   
 
    i = 0
    badLines = [] # integer of bad line numbers in data
@@ -58,20 +98,35 @@ def printStats(filename):
 
    print "==== Results ===="
    print "Bad lines in file (lines excluded): %d" %(len(badLines))
+   print "Num payments (good lines): %d" %(i - len(badLines))
    print "Num providers/docs: %d" %(len(docs))
    print "Num companies/payers: %d" %(len(cos))
 
    cosCountHist = genCountHistogram(cos)
    docsCountHist = genCountHistogram(docs)
 
-   print "cos: Payments, num companies making that many payments"
+   print "cos: Num payments, num companies making that many payments"
    for k in sorted(cosCountHist):
       print "%d %d" %(k, cosCountHist[k])
 
-
-   print "docs: Payments, num doctors recieving that many payments"
+   print "docs: Num payments, num doctors recieving that many payments"
    for k in sorted(docsCountHist):
       print "%d %d" %(k, docsCountHist[k])
+
+   cosSumPayments = sumPayments(cos)
+   docsSumPayments = sumPayments(docs)
+
+   binsize = 100.
+   cosPaymentHist = paymentAmountHistogram(cosSumPayments, binsize)
+   docsPaymentHist = paymentAmountHistogram(docsSumPayments, binsize)
+
+   print "cos: Payment histogram: payment->+%f, num cos making that much in total payments" %(binsize)
+   for k in sorted(cosPaymentHist):
+      print "%f %d" %(k, cosPaymentHist[k])
+
+   print "docs: Payment histogram: payment->+%f, num docs taking that much in total payments" %(binsize)
+   for k in sorted(docsPaymentHist):
+      print "%f %d" %(k, docsPaymentHist[k])
 
 
 if __name__ == "__main__":
