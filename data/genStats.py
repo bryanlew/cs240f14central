@@ -111,6 +111,10 @@ def printStats(filename):
    print "Num payments (good lines): %d" %(i - len(badLines))
    print "Num providers/docs: %d" %(len(docs))
    print "Num companies/payers: %d" %(len(cos))
+   maxPayout = max([v for sub in cos.values() for v in sub])
+   print "Largest payout %f" %(maxPayout)
+   maxPayin = max([v for sub in docs.values() for v in sub])
+   print "Largest payin %f" %(maxPayin)
 
    cosPaymentCountHist = genPaymentCountHistogram(cos)
    assert(NUM_COS == sum( cosPaymentCountHist.values() ))
@@ -131,7 +135,7 @@ def printStats(filename):
    docsSumPayments = sumPayments(docs)
    assert(NUM_DOCS == len(docsSumPayments))
 
-   binsize = 100.
+   binsize = 1000.
    cosPaymentHist = paymentAmountHistogram(cosSumPayments, binsize)
    assert(NUM_COS == sum( cosPaymentHist.values() ))
    docsPaymentHist = paymentAmountHistogram(docsSumPayments, binsize)
