@@ -20,14 +20,17 @@ def writeTab(fout, x, y):
 
 
 '''
-Write out a histogram file.
+Write out a histogram file in gnuplot-friendly tab-sep format.
 Inputs: d, a dictionary of {int,float} -> {int,float}, which will be
    interpreted in the plot as x -> y
    filename, a filename to use in the output file, ".tab" will be appended.
+   comment, an optional comment to put in the header of the file.
 Outputs: a file "filename.tab", where filename is the input variable.
 '''
-def writeHistogramFile(filename, d):
+def writeHistogramFile(filename, d, comment=""):
    with open(filename+".tab", "w") as fout:
+      if len(comment) > 0:
+         fout.write('# '+comment+'\n')
       for k in sorted(d):
          writeTab(fout, k, d[k])
       
@@ -142,13 +145,13 @@ def printStats(filename):
    docsPaymentCountHist = genPaymentCountHistogram(docs)
    assert(NUM_DOCS == sum( docsPaymentCountHist.values() ))
 
-   print "cos: Num payments, num companies making that many payments"
-   for k in sorted(cosPaymentCountHist):
-      print "%d %d" %(k, cosPaymentCountHist[k])
+   #print "cos: Num payments, num companies making that many payments"
+   #for k in sorted(cosPaymentCountHist):
+   #   print "%d %d" %(k, cosPaymentCountHist[k])
 
-   print "docs: Num payments, num doctors recieving that many payments"
-   for k in sorted(docsPaymentCountHist):
-      print "%d %d" %(k, docsPaymentCountHist[k])
+   #print "docs: Num payments, num doctors recieving that many payments"
+   #for k in sorted(docsPaymentCountHist):
+   #   print "%d %d" %(k, docsPaymentCountHist[k])
 
    cosSumPayments = sumPayments(cos)
    assert(NUM_COS == len(cosSumPayments))
@@ -170,10 +173,10 @@ def printStats(filename):
    #   print "%f %d" %(k, docsPaymentDollarsHist[k])
 
    # Write out histogram files for gnuplot.
-   writeHistogramFile("cos_payment_count_hist", cosPaymentCountHist)
-   writeHistogramFile("docs_payment_count_hist", docsPaymentCountHist)
-   writeHistogramFile("cos_payment_dollars_hist", cosPaymentDollarsHist)
-   writeHistogramFile("docs_payment_dollars_hist", docsPaymentDollarsHist)
+   writeHistogramFile("cos_payment_count_hist", cosPaymentCountHist, "NumberOfPayments   NumberOfCompaniesMakingThatManyPayments")
+   writeHistogramFile("docs_payment_count_hist", docsPaymentCountHist, "NumberOfPayments   NumberOfDoctorsReceivingThatManyPayments")
+   writeHistogramFile("cos_payment_dollars_hist", cosPaymentDollarsHist, "TotalOfPaymentsDollars   NumCompaniesMakingThatMuchInTotalPayments")
+   writeHistogramFile("docs_payment_dollars_hist", docsPaymentDollarsHist, "TotalOfPaymentsDollars   NumDoctorsTakingThatMuchInTotalPayments")
 
 
 if __name__ == "__main__":
