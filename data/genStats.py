@@ -6,7 +6,20 @@ Generate basic stats about the payment_graph_physician_company.csv
 data.
 '''
 
+import os
 import math
+from subprocess import call
+
+
+'''
+Plot a CCDF in gnuplot.
+Inputs: filename, a tab sep file for gnuplot to injest (columns 1,2)
+   title, the title of the plot.
+Output: (a gnuplot .png file is created)
+'''
+def plotCCDF(filename, title):
+   gnuplotarg = '-e "filenameIn=\''+filename+'\'; titleIn=\''+title+'\'"'
+   os.system( "gnuplot "+gnuplotarg+" plotCCDF.plt" )
 
 
 '''
@@ -207,6 +220,11 @@ def printStats(filename):
    writeHistogramFile("cos_payment_dollars_ccdf", cosPaymentDollarsCCDF, "TotalOfPaymentsDollars   RatioCompaniesMaking>=ThatMuchInTotalPayments")
    writeHistogramFile("docs_payment_dollars_ccdf", docsPaymentDollarsCCDF, "TotalOfPaymentsDollars   RatioDoctorsTaking>=ThatMuchInTotalPayments")
 
+   # Plot file for gnuplot
+   plotCCDF("cos_payment_count_ccdf.tab", "CCDF, x is number of payments, y is % of companies making >= that many payments")
+   plotCCDF("docs_payment_count_ccdf.tab", "CCDF, x is number of payments, y is % of doctors taking >= that many payments")
+   plotCCDF("cos_payment_dollars_ccdf.tab", "CCDF, x is number of payments, y is % of companies making >= that total amount ($) of payments")
+   plotCCDF("docs_payment_dollars_ccdf.tab", "CCDF, x is number of payments, y is % of doctors taking >= that total amount ($) of payments")
 
 
 if __name__ == "__main__":
