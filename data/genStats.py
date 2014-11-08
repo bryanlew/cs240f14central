@@ -88,6 +88,23 @@ def paymentAmountHistogram(d, binsize):
    return out
 
 
+'''
+Given an input histogram dict, compute the CCDF (the fraction of the
+dataset with value >= x.
+Input: hist, a dict {int,float} -> int, a histogram, where the first
+   value (key) is the "y" and the second is the count of datapoints.
+'''
+def ccdfFromHistogram(hist):
+   datasize = sum( hist.values() )
+   out = dict() # {int,float whatever the key is} -> float(1-0)
+   obsdata = 0  # accumulator for observed data (discards in CCDF)
+   for k in sorted(hist):
+      out[k] = (datasize - obsdata) / float(datasize)
+      assert(out[k] >= 0. and out[k] <= 1.)
+      obsdata += hist[k]
+   return out
+
+
 def printStats(filename):
    # A few variables used for sanity checks
    NUM_DOCS = 0
@@ -177,6 +194,19 @@ def printStats(filename):
    writeHistogramFile("docs_payment_count_hist", docsPaymentCountHist, "NumberOfPayments   NumberOfDoctorsReceivingThatManyPayments")
    writeHistogramFile("cos_payment_dollars_hist", cosPaymentDollarsHist, "TotalOfPaymentsDollars   NumCompaniesMakingThatMuchInTotalPayments")
    writeHistogramFile("docs_payment_dollars_hist", docsPaymentDollarsHist, "TotalOfPaymentsDollars   NumDoctorsTakingThatMuchInTotalPayments")
+
+   # Create CCDF distributions (counts at or above the level).
+   cosPaymentCountCCDF = ccdfFromHistogram(cosPaymentCountHist)
+   docsPaymentCountCCDF = ccdfFromHistogram(docsPaymentCountHist)
+   cosPaymentDollarsCCDF = ccdfFromHistogram(cosPaymentDollarsHist)
+   docsPaymentDollarsCCDF = ccdfFromHistogram(docsPaymentDollarsHist)
+
+   # Write out CCDF distributions for gnuplot.
+   writeHistogramFile("cos_payment_count_ccdf", cosPaymentCountCCDF, "NumberOfPayments   RatioOfCompaniesMaking>=ThatManyPayments")
+   writeHistogramFile("docs_payment_count_ccdf", docsPaymentCountCCDF, "NumberOfPayments   RatioOfDoctorsReceiving>=ThatManyPayments")
+   writeHistogramFile("cos_payment_dollars_ccdf", cosPaymentDollarsCCDF, "TotalOfPaymentsDollars   RatioCompaniesMaking>=ThatMuchInTotalPayments")
+   writeHistogramFile("docs_payment_dollars_ccdf", docsPaymentDollarsCCDF, "TotalOfPaymentsDollars   RatioDoctorsTaking>=ThatMuchInTotalPayments")
+
 
 
 if __name__ == "__main__":
