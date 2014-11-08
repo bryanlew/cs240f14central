@@ -1,0 +1,1 @@
+The various .tab files are created by genStats.py, and are files intended to be used as input to gnuplot (it likes tab-sep files).
