@@ -9,8 +9,28 @@ data.
 import math
 
 
+'''
+Write a line in a tab file (like gnuplot takes as input).
+'''
+def writeTab(fout, x, y):
+   fout.write(str(x))
+   fout.write('\t')
+   fout.write(str(y))
+   fout.write('\n')
 
 
+'''
+Write out a histogram file.
+Inputs: d, a dictionary of {int,float} -> {int,float}, which will be
+   interpreted in the plot as x -> y
+   filename, a filename to use in the output file, ".tab" will be appended.
+Outputs: a file "filename.tab", where filename is the input variable.
+'''
+def writeHistogramFile(filename, d):
+   with open(filename+".tab", "w") as fout:
+      for k in sorted(d):
+         writeTab(fout, k, d[k])
+      
 
 '''
 Produce a payment count histogram.
@@ -136,18 +156,24 @@ def printStats(filename):
    assert(NUM_DOCS == len(docsSumPayments))
 
    binsize = 1000.
-   cosPaymentHist = paymentAmountHistogram(cosSumPayments, binsize)
-   assert(NUM_COS == sum( cosPaymentHist.values() ))
-   docsPaymentHist = paymentAmountHistogram(docsSumPayments, binsize)
-   assert(NUM_DOCS == sum( docsPaymentHist.values() ))
+   cosPaymentDollarsHist = paymentAmountHistogram(cosSumPayments, binsize)
+   assert(NUM_COS == sum( cosPaymentDollarsHist.values() ))
+   docsPaymentDollarsHist = paymentAmountHistogram(docsSumPayments, binsize)
+   assert(NUM_DOCS == sum( docsPaymentDollarsHist.values() ))
 
-   print "cos: Payment histogram: payment->+%f, num cos making that much in total payments" %(binsize)
-   for k in sorted(cosPaymentHist):
-      print "%f %d" %(k, cosPaymentHist[k])
+   #print "cos: Payment histogram: payment->+%f, num cos making that much in total payments" %(binsize)
+   #for k in sorted(cosPaymentDollarsHist):
+   #   print "%f %d" %(k, cosPaymentDollarsHist[k])
 
-   print "docs: Payment histogram: payment->+%f, num docs taking that much in total payments" %(binsize)
-   for k in sorted(docsPaymentHist):
-      print "%f %d" %(k, docsPaymentHist[k])
+   #print "docs: Payment histogram: payment->+%f, num docs taking that much in total payments" %(binsize)
+   #for k in sorted(docsPaymentDollarsHist):
+   #   print "%f %d" %(k, docsPaymentDollarsHist[k])
+
+   # Write out histogram files for gnuplot.
+   writeHistogramFile("cos_payment_count_hist", cosPaymentCountHist)
+   writeHistogramFile("docs_payment_count_hist", docsPaymentCountHist)
+   writeHistogramFile("cos_payment_dollars_hist", cosPaymentDollarsHist)
+   writeHistogramFile("docs_payment_dollars_hist", docsPaymentDollarsHist)
 
 
 if __name__ == "__main__":
