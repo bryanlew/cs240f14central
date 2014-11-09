@@ -118,14 +118,41 @@ def ccdfFromHistogram(hist):
    return out
 
 
+'''
+Print secondary statistics.
+Inputs:
+   cosToDocs, dict() of company -> set of doctors paid
+   docsToCos, dict() of doctor -> set of companies recvd from
+Outputs: (.tab files and gnuplot-generated .png images)
+'''
+def printSecondaries(cosToDocs, docsToCos):
+   # Generate a histogram
+   # Note: all the input data has been coalesced into one company->doc
+   #       link, so this is the same as docs_payment_count_hist.tab
+   # (number of companies x) (#docs paid by exactly x companies)
+   numCoToNumDocs = dict()
+   for k in docsToCos:
+      cosToThisDoc = len(docsToCos[k])
+      if cosToThisDoc not in numCoToNumDocs:
+         numCoToNumDocs[cosToThisDoc] = 0
+      numCoToNumDocs[cosToThisDoc] += 1
+
+   writeHistogramFile("secondary_numcos_docsPaidByNumCos_hist", numCoToNumDocs, "NumberOfCompaniesX   NumberOfDocsPaidByExactlyXCompanies")
+
+
 def printStats(filename):
    # A few variables used for sanity checks
    NUM_DOCS = 0
    NUM_COS = 0
    printBadLines = False
    
+   # Core structures
    cos = dict() # company -> list of payments made
    docs = dict() # doc/providerId -> list of payments recvd
+
+   # Secondary structures (added later)
+   cosToDocs = dict() # company -> set of doctors paid
+   docsToCos = dict() # doctor -> set of companies recvd from
 
    i = 0
    badLines = [] # integer of bad line numbers in data
@@ -148,12 +175,16 @@ def printStats(filename):
          amount = float(s[2])
          if doc not in docs:
             docs[doc] = []
+            docsToCos[doc] = set()
             NUM_DOCS += 1
          if co not in cos:
             cos[co] = []
+            cosToDocs[co] = set()
             NUM_COS += 1
          docs[doc].append(amount)
          cos[co].append(amount)
+         docsToCos[doc].add(co)
+         cosToDocs[co].add(doc)
          #print doc, " ", co, " ", amount
 
    assert(NUM_COS == len(cos))
@@ -225,6 +256,9 @@ def printStats(filename):
    plotCCDF("docs_payment_count_ccdf.tab", "CCDF, x is number of payments, y is % of doctors taking >= that many payments")
    plotCCDF("cos_payment_dollars_ccdf.tab", "CCDF, x is total value $ of payments, y is % of companies making >= that total amount ($) of payments")
    plotCCDF("docs_payment_dollars_ccdf.tab", "CCDF, x is total value $ of payments, y is % of doctors taking >= that total amount ($) of payments")
+
+   # Secondary stastics
+   printSecondaries(cosToDocs, docsToCos)
 
 
 if __name__ == "__main__":
