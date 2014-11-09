@@ -23,5 +23,5 @@ set ylabel "P(X>=x)"
 set tics scale 2
 #set yrange [10**-6:1]
 
-plot filenameIn using 1:2 title "x" with points pt 7 lc 7
+plot filenameIn using 1:2 title "x" with points pt 7 lc 2
 

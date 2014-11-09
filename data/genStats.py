@@ -188,7 +188,7 @@ def printStats(filename):
    docsSumPayments = sumPayments(docs)
    assert(NUM_DOCS == len(docsSumPayments))
 
-   binsize = 1000.
+   binsize = 10.
    cosPaymentDollarsHist = paymentAmountHistogram(cosSumPayments, binsize)
    assert(NUM_COS == sum( cosPaymentDollarsHist.values() ))
    docsPaymentDollarsHist = paymentAmountHistogram(docsSumPayments, binsize)
@@ -223,8 +223,8 @@ def printStats(filename):
    # Plot file for gnuplot
    plotCCDF("cos_payment_count_ccdf.tab", "CCDF, x is number of payments, y is % of companies making >= that many payments")
    plotCCDF("docs_payment_count_ccdf.tab", "CCDF, x is number of payments, y is % of doctors taking >= that many payments")
-   plotCCDF("cos_payment_dollars_ccdf.tab", "CCDF, x is number of payments, y is % of companies making >= that total amount ($) of payments")
-   plotCCDF("docs_payment_dollars_ccdf.tab", "CCDF, x is number of payments, y is % of doctors taking >= that total amount ($) of payments")
+   plotCCDF("cos_payment_dollars_ccdf.tab", "CCDF, x is total value $ of payments, y is % of companies making >= that total amount ($) of payments")
+   plotCCDF("docs_payment_dollars_ccdf.tab", "CCDF, x is total value $ of payments, y is % of doctors taking >= that total amount ($) of payments")
 
 
 if __name__ == "__main__":
