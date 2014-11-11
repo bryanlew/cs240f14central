@@ -139,6 +139,21 @@ def printSecondaries(cosToDocs, docsToCos):
 
    writeHistogramFile("secondary_numcos_docsPaidByNumCos_hist", numCoToNumDocs, "NumberOfCompaniesX   NumberOfDocsPaidByExactlyXCompanies")
 
+   # Average degree of a doctor (how many companies pay the doc).
+   docDegSum = 0.
+   for d in docsToCos:
+      docDegSum += len( docsToCos[d] )
+   docDegSum /= len(docsToCos)
+   print "Average degree of a doctor (# cos pay the doc): %f" %(docDegSum)
+
+   # Average degree of a company (how many doctors they pay).
+   coDegSum = 0.
+   for d in cosToDocs:
+      coDegSum += len( cosToDocs[d] )
+   coDegSum /= len(cosToDocs)
+   print "Average degree of a company (# docs they pay): %f" %(coDegSum)
+   
+
 
 def printStats(filename):
    # A few variables used for sanity checks
