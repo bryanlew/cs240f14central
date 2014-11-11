@@ -1,0 +1,10 @@
+Here are the various SNAP commands used to extract data.
+
+
+First attempt:
+./agmfitmain -i:provider_provider_network_1000.txt -c:12 -e:0.1 -o:community_1.txt
+
+Second (with filtered data, only >$1000 company->doctor edges are counted.
+./agmfitmain -i:provider_provider_network_1000_filtered.txt -c:50 -e:0.1 -o:community_1_filtered.txt
+
+
