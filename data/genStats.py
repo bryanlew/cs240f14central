@@ -179,6 +179,7 @@ def printStats(filename):
 
    i = 0
    badLines = [] # integer of bad line numbers in data
+   rawTotalPayments = 0.
    with open(filename) as fin:
       for line in fin:
          s = line.split()
@@ -208,6 +209,7 @@ def printStats(filename):
          cos[co].append(amount)
          docsToCos[doc].add(co)
          cosToDocs[co].add(doc)
+         rawTotalPayments += amount
          #print doc, " ", co, " ", amount
 
    assert(NUM_COS == len(cos))
@@ -222,6 +224,15 @@ def printStats(filename):
    print "Largest payout %f" %(maxPayout)
    maxPayin = max([v for sub in docs.values() for v in sub])
    print "Largest payin %f" %(maxPayin)
+
+   coTotalPayments = 0.
+   for c in cos:
+      for p in cos[c]:
+         coTotalPayments += p
+   totalPayments = sum([v for sub in docs.values() for v in sub])
+   print "Total of all payments %f" %(totalPayments)
+   print "Total of all paymentsC %f" %(coTotalPayments)
+   print "Total of all paymentsRaw %f" %(rawTotalPayments)
 
    cosPaymentCountHist = genPaymentCountHistogram(cos)
    assert(NUM_COS == sum( cosPaymentCountHist.values() ))
