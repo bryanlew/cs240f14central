@@ -23,6 +23,14 @@ def plotCCDF(filename, title):
 
 
 '''
+Plot a log-log plot, provided x, y axis titles and graph title.
+'''
+def plotLogLog(filename, title, xtitle="x", ytitle="y"):
+   gnuplotarg = '-e "filenameIn=\''+filename+'\'; titleIn=\''+title+'\'; xIn=\''+xtitle+'\'; yIn=\''+ytitle+'\'"'
+   os.system( "gnuplot "+gnuplotarg+" plotLogLog.plt" )
+
+
+'''
 Write a line in a tab file (like gnuplot takes as input).
 '''
 def writeTab(fout, x, y):
@@ -253,6 +261,10 @@ def printStats(filename):
    writeHistogramFile("docs_payment_count_hist", docsPaymentCountHist, "NumberOfPayments   NumberOfDoctorsReceivingThatManyPayments")
    writeHistogramFile("cos_payment_dollars_hist", cosPaymentDollarsHist, "TotalOfPaymentsDollars   NumCompaniesMakingThatMuchInTotalPayments")
    writeHistogramFile("docs_payment_dollars_hist", docsPaymentDollarsHist, "TotalOfPaymentsDollars   NumDoctorsTakingThatMuchInTotalPayments")
+
+   # Plot histograms for gnuplot.
+   plotLogLog("docs_payment_count_hist.tab", "Doctor(node) to community degree distribution histogram", "Degree", "Number of Doctors")
+
 
    # Create CCDF distributions (counts at or above the level).
    cosPaymentCountCCDF = ccdfFromHistogram(cosPaymentCountHist)
