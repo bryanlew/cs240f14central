@@ -35,10 +35,13 @@ def plotLogLog(filename, title, xtitle="x", ytitle="y"):
 '''
 Write a line in a tab file (like gnuplot takes as input).
 '''
-def writeTab(fout, x, y):
+def writeTab(fout, x, y, z=None):
    fout.write(str(x))
    fout.write('\t')
    fout.write(str(y))
+   if z is not None:
+      fout.write('\t')
+      fout.write(str(z))   
    fout.write('\n')
 
 
@@ -162,32 +165,45 @@ def printSecondaries(cosToDocs, docsToCos):
       coDegSum += len( cosToDocs[d] )
    coDegSum /= len(cosToDocs)
    print "Average degree of a company (# docs they pay): %f" %(coDegSum)
-   
+  
 
 
-def k3Trim(filename):
+'''
+Parse the input file, using an ignore/removal set, and process the file
+into data structures.  Optionally, writes the filtered data out to a
+file in the same input format (eg: filter the original).
+Returns:
+   cos = dict() # company -> list of payments made
+   docs = dict() # doc/providerId -> list of payments recvd
+   cosToDocs = dict() # company -> set of doctors paid
+   docsToCos = dict() # doctor -> set of companies recvd from
+   badLines = [] # integer of bad line numbers in data
+   rawTotalPayments = 0.
+'''
+def fileToStructures(filename, skipCos=None, skipDocs=None, fileOutPrefix=""):
+   outFile = None
    # A few variables used for sanity checks
    NUM_DOCS = 0
    NUM_COS = 0
-   printBadLines = False
-   
-   # Core structures
-   cos = dict() # company -> list of payments made
-   docs = dict() # doc/providerId -> list of payments recvd
-
-   # Secondary structures (added later)
-   cosToDocs = dict() # company -> set of doctors paid
-   docsToCos = dict() # doctor -> set of companies recvd from
+   if fileOutPrefix != "":
+      outFile = open(fileOutPrefix + filename, "w")
 
    i = 0
+   printBadLines = False
    badLines = [] # integer of bad line numbers in data
    rawTotalPayments = 0.
-   # Build raw data (no filter)
+   cos = dict() # company -> list of payments made
+   docs = dict() # doc/providerId -> list of payments recvd
+   cosToDocs = dict() # company -> set of doctors paid
+   docsToCos = dict() # doctor -> set of companies recvd from
+   
    with open(filename) as fin:
       for line in fin:
          s = line.split()
          i += 1
          if i == 1:
+            if outFile is not None:
+               outFile.write(line)
             continue # header line
          if(len(s)!=3):
             if(printBadLines):
@@ -200,6 +216,15 @@ def k3Trim(filename):
          doc = int(s[0])
          co = int(s[1])
          amount = float(s[2])
+
+         # Filters
+         if skipCos is not None and co in skipCos:
+            #print "skipping co ",str(co)
+            continue
+         if skipDocs is not None and doc in skipDocs:
+            #print "skipping doc ",str(doc)
+            continue
+
          if doc not in docs:
             docs[doc] = []
             docsToCos[doc] = set()
@@ -214,20 +239,45 @@ def k3Trim(filename):
          cosToDocs[co].add(doc)
          rawTotalPayments += amount
          #print doc, " ", co, " ", amount
+         if outFile is not None:
+            writeTab(outFile, doc, co, amount)
 
-   assert(NUM_COS == len(cos))
-   assert(NUM_DOCS == len(docs))
+   if outFile is not None:
+      outFile.close()
+
+   # debug only
+   if skipCos is None and skipDocs is None:
+      print "Did debug check"
+      assert(NUM_COS == len(cos))
+      assert(NUM_DOCS == len(docs))
+
+   return cos, docs, cosToDocs, docsToCos, badLines, rawTotalPayments
+
+
+
+def k3Trim(filename):
+   # Core structures
+   #cos = dict() # company -> list of payments made
+   #docs = dict() # doc/providerId -> list of payments recvd
+
+   # Secondary structures (added later)
+   #cosToDocs = dict() # company -> set of doctors paid
+   #docsToCos = dict() # doctor -> set of companies recvd from
+
+   #rawTotalPayments = 0.
+   # First pass, no filters.
+   cosA, docsA, cosToDocsA, docsToCosA, badlinesA, rawTotalPaymentsA = fileToStructures(filename)
 
    MIN_DOC_K = 3
    MIN_CO_K = 3
    # Filter data
    removeDocs = set() # doctor Ids to remove (k(doc) < MIN_DOC_K)
    removeCos = set() # company Ids to remove (k(co) < MIN_CO_K)
-   for d in docsToCos:
-      if len(docsToCos[d]) < MIN_DOC_K:
+   for d in docsToCosA:
+      if len(docsToCosA[d]) < MIN_DOC_K:
          removeDocs.add(d)
-   for c in cosToDocs:
-      if len(cosToDocs[c]) < MIN_CO_K:
+   for c in cosToDocsA:
+      if len(cosToDocsA[c]) < MIN_CO_K:
          removeCos.add(c)
 
    print "======= k removals ========"
@@ -235,6 +285,22 @@ def k3Trim(filename):
    print "Removed companies with < " + str(MIN_CO_K) + " payments made"
    print "docs removed: ", len(removeDocs)
    print "cos removed: ", len(removeCos)
+   
+   # Second pass, filter and output a new "input" file.
+#def fileToStructures(filename, skipCos=None, skipDocs=None, fileOutPrefix=""):
+   
+   filePrefix = "minK_doc_"+str(MIN_DOC_K)+"_co_"+str(MIN_CO_K)+"_"
+   cos, docs, cosToDocs, docsToCos, badlines, rawTotalPayments = fileToStructures(filename, removeCos, removeDocs, filePrefix)
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
    assert(False)
 
    print "==== Results ===="
