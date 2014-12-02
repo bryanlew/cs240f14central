@@ -247,7 +247,6 @@ def fileToStructures(filename, skipCos=None, skipDocs=None, fileOutPrefix=""):
 
    # debug only
    if skipCos is None and skipDocs is None:
-      print "Did debug check"
       assert(NUM_COS == len(cos))
       assert(NUM_DOCS == len(docs))
 
@@ -266,7 +265,7 @@ def k3Trim(filename):
 
    #rawTotalPayments = 0.
    # First pass, no filters.
-   cosA, docsA, cosToDocsA, docsToCosA, badlinesA, rawTotalPaymentsA = fileToStructures(filename)
+   cosA, docsA, cosToDocsA, docsToCosA, badLinesA, rawTotalPaymentsA = fileToStructures(filename)
 
    MIN_DOC_K = 3
    MIN_CO_K = 3
@@ -290,22 +289,11 @@ def k3Trim(filename):
 #def fileToStructures(filename, skipCos=None, skipDocs=None, fileOutPrefix=""):
    
    filePrefix = "minK_doc_"+str(MIN_DOC_K)+"_co_"+str(MIN_CO_K)+"_"
-   cos, docs, cosToDocs, docsToCos, badlines, rawTotalPayments = fileToStructures(filename, removeCos, removeDocs, filePrefix)
+   cos, docs, cosToDocs, docsToCos, badLines, rawTotalPayments = fileToStructures(filename, removeCos, removeDocs, filePrefix)
    
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   assert(False)
 
    print "==== Results ===="
    print "Bad lines in file (lines excluded): %d" %(len(badLines))
-   print "Num payments (good lines): %d" %(i - len(badLines))
    print "Num providers/docs: %d" %(len(docs))
    print "Num companies/payers: %d" %(len(cos))
    maxPayout = max([v for sub in cos.values() for v in sub])
@@ -314,19 +302,22 @@ def k3Trim(filename):
    print "Largest payin %f" %(maxPayin)
 
    coTotalPayments = 0.
+   numPayments = 0
    for c in cos:
       for p in cos[c]:
+         numPayments += 1
          coTotalPayments += p
    totalPayments = sum([v for sub in docs.values() for v in sub])
    print "Total of all payments %f" %(totalPayments)
    print "Total of all paymentsC %f" %(coTotalPayments)
    print "Total of all paymentsRaw %f" %(rawTotalPayments)
+   print "Num payments (good lines): %d" %(numPayments)
 
    cosPaymentCountHist = genPaymentCountHistogram(cos)
-   assert(NUM_COS == sum( cosPaymentCountHist.values() ))
+   #assert(NUM_COS == sum( cosPaymentCountHist.values() ))
 
    docsPaymentCountHist = genPaymentCountHistogram(docs)
-   assert(NUM_DOCS == sum( docsPaymentCountHist.values() ))
+   #assert(NUM_DOCS == sum( docsPaymentCountHist.values() ))
 
    #print "cos: Num payments, num companies making that many payments"
    #for k in sorted(cosPaymentCountHist):
@@ -337,15 +328,15 @@ def k3Trim(filename):
    #   print "%d %d" %(k, docsPaymentCountHist[k])
 
    cosSumPayments = sumPayments(cos)
-   assert(NUM_COS == len(cosSumPayments))
+   #assert(NUM_COS == len(cosSumPayments))
    docsSumPayments = sumPayments(docs)
-   assert(NUM_DOCS == len(docsSumPayments))
+   #assert(NUM_DOCS == len(docsSumPayments))
 
    binsize = 10.
    cosPaymentDollarsHist = paymentAmountHistogram(cosSumPayments, binsize)
-   assert(NUM_COS == sum( cosPaymentDollarsHist.values() ))
+   #assert(NUM_COS == sum( cosPaymentDollarsHist.values() ))
    docsPaymentDollarsHist = paymentAmountHistogram(docsSumPayments, binsize)
-   assert(NUM_DOCS == sum( docsPaymentDollarsHist.values() ))
+   #assert(NUM_DOCS == sum( docsPaymentDollarsHist.values() ))
 
    #print "cos: Payment histogram: payment->+%f, num cos making that much in total payments" %(binsize)
    #for k in sorted(cosPaymentDollarsHist):
