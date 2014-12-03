@@ -10,6 +10,7 @@ with <= 3 members.
 
 import os
 import math
+import itertools
 from subprocess import call
 
 
@@ -253,6 +254,23 @@ def fileToStructures(filename, skipCos=None, skipDocs=None, fileOutPrefix=""):
    return cos, docs, cosToDocs, docsToCos, badLines, rawTotalPayments
 
 
+'''
+Given a cosToDocs dict, (company -> set of doctors paid), generate
+a series of edges in the doc-doc (provider-provider) network:
+A doc has an edge to another if they are paid by the same company.
+Output is a tab-sep file for snap usage, docNId docNid
+'''
+def writeCoCo(docsToCos, filePrefix=""):
+   with open(filePrefix+"_.tab", "w") as fout:
+      # Write title line
+      fout.write("# companyID   companyId")
+      fout.write('\n')
+      for d in docsToCos:
+         print "."
+         edges = list(itertools.combinations(docsToCos[d],2))
+         for e in edges:
+            writeTab(fout, e[0], e[1])
+
 
 def k3Trim(filename):
    # Core structures
@@ -312,6 +330,9 @@ def k3Trim(filename):
    print "Total of all paymentsC %f" %(coTotalPayments)
    print "Total of all paymentsRaw %f" %(rawTotalPayments)
    print "Num payments (good lines): %d" %(numPayments)
+
+   writeCoCo(docsToCos, "company_company_k3")
+
 
    cosPaymentCountHist = genPaymentCountHistogram(cos)
    #assert(NUM_COS == sum( cosPaymentCountHist.values() ))
