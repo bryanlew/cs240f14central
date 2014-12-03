@@ -261,15 +261,22 @@ A doc has an edge to another if they are paid by the same company.
 Output is a tab-sep file for snap usage, docNId docNid
 '''
 def writeCoCo(docsToCos, filePrefix=""):
+   edges = set() # set of pairs (companyID, companyID), lower integer
+   # of the tuple comes first
+   for d in docsToCos:
+      print "."
+      combEdges = list(itertools.combinations(docsToCos[d],2))
+      for e in combEdges:
+         edges.add(( min(e[0],e[1]), max(e[0],e[1]) ))
+
+   print "Number of nonduplicated co-co edges: " +str(len(edges))
+
    with open(filePrefix+"_.tab", "w") as fout:
       # Write title line
       fout.write("# companyID   companyId")
       fout.write('\n')
-      for d in docsToCos:
-         print "."
-         edges = list(itertools.combinations(docsToCos[d],2))
-         for e in edges:
-            writeTab(fout, e[0], e[1])
+      for e in edges:
+         writeTab(fout, e[0], e[1])
 
 
 def k3Trim(filename):
