@@ -260,6 +260,26 @@ a series of edges in the doc-doc (provider-provider) network:
 A doc has an edge to another if they are paid by the same company.
 Output is a tab-sep file for snap usage, docNId docNid
 '''
+def writeDocDoc(cosToDocs, filePrefix=""):
+   assert(False)  # too big to fit in memory
+   edges = set() # set of pairs (companyID, companyID), lower integer
+   # of the tuple comes first
+   for c in cosToDocs:
+      print "d"
+      combEdges = list(itertools.combinations(cosToDocs[c],2))
+      for e in combEdges:
+         edges.add(( min(e[0],e[1]), max(e[0],e[1]) ))
+
+   print "Number of nonduplicated doc-doc edges: " +str(len(edges))
+
+   with open(filePrefix+"_.tab", "w") as fout:
+      # Write title line
+      fout.write("# doctorId   doctorId")
+      fout.write('\n')
+      for e in edges:
+         writeTab(fout, e[0], e[1])
+
+
 def writeCoCo(docsToCos, filePrefix=""):
    edges = set() # set of pairs (companyID, companyID), lower integer
    # of the tuple comes first
@@ -339,6 +359,7 @@ def k3Trim(filename):
    print "Num payments (good lines): %d" %(numPayments)
 
    writeCoCo(docsToCos, "company_company_k3")
+   #writeDocDoc(cosToDocs, "doc_doc_k3")
 
 
    cosPaymentCountHist = genPaymentCountHistogram(cos)
