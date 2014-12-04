@@ -181,7 +181,7 @@ Returns:
    badLines = [] # integer of bad line numbers in data
    rawTotalPayments = 0.
 '''
-def fileToStructures(filename, skipCos=None, skipDocs=None, fileOutPrefix=""):
+def fileToStructures(filename, skipCos=None, skipDocs=None, fileOutPrefix="", MIN_PAYMENT=float('-inf')):
    outFile = None
    # A few variables used for sanity checks
    NUM_DOCS = 0
@@ -225,6 +225,8 @@ def fileToStructures(filename, skipCos=None, skipDocs=None, fileOutPrefix=""):
          if skipDocs is not None and doc in skipDocs:
             #print "skipping doc ",str(doc)
             continue
+         if amount < MIN_PAYMENT:
+            continue
 
          if doc not in docs:
             docs[doc] = []
@@ -261,7 +263,6 @@ A doc has an edge to another if they are paid by the same company.
 Output is a tab-sep file for snap usage, docNId docNid
 '''
 def writeDocDoc(cosToDocs, filePrefix=""):
-   assert(False)  # too big to fit in memory
    edges = set() # set of pairs (companyID, companyID), lower integer
    # of the tuple comes first
    for c in cosToDocs:
@@ -284,7 +285,7 @@ def writeCoCo(docsToCos, filePrefix=""):
    edges = set() # set of pairs (companyID, companyID), lower integer
    # of the tuple comes first
    for d in docsToCos:
-      print "."
+      #print "."
       combEdges = list(itertools.combinations(docsToCos[d],2))
       for e in combEdges:
          edges.add(( min(e[0],e[1]), max(e[0],e[1]) ))
@@ -324,17 +325,18 @@ def k3Trim(filename):
       if len(cosToDocsA[c]) < MIN_CO_K:
          removeCos.add(c)
 
+   MIN_PAYMENT = 1000.  # filter out any payments less than this
    print "======= k removals ========"
    print "Removed docs with < " + str(MIN_DOC_K) + " payments recvd"
    print "Removed companies with < " + str(MIN_CO_K) + " payments made"
    print "docs removed: ", len(removeDocs)
    print "cos removed: ", len(removeCos)
-   
+   print "Removed payments less than " + str(MIN_PAYMENT)
+
    # Second pass, filter and output a new "input" file.
 #def fileToStructures(filename, skipCos=None, skipDocs=None, fileOutPrefix=""):
-   
    filePrefix = "minK_doc_"+str(MIN_DOC_K)+"_co_"+str(MIN_CO_K)+"_"
-   cos, docs, cosToDocs, docsToCos, badLines, rawTotalPayments = fileToStructures(filename, removeCos, removeDocs, filePrefix)
+   cos, docs, cosToDocs, docsToCos, badLines, rawTotalPayments = fileToStructures(filename, removeCos, removeDocs, filePrefix, MIN_PAYMENT)
    
 
    print "==== Results ===="
@@ -358,8 +360,8 @@ def k3Trim(filename):
    print "Total of all paymentsRaw %f" %(rawTotalPayments)
    print "Num payments (good lines): %d" %(numPayments)
 
-   writeCoCo(docsToCos, "company_company_k3")
-   #writeDocDoc(cosToDocs, "doc_doc_k3")
+   #writeCoCo(docsToCos, "company_company_k3_1000")
+   writeDocDoc(cosToDocs, "doc_doc_k3_1000")
 
 
    cosPaymentCountHist = genPaymentCountHistogram(cos)
