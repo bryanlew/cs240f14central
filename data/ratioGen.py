@@ -323,7 +323,7 @@ Filter out payments/links based on the proportion of total payments.
    #docsPayments = dict() # doctor -> list[ (payment, co) tuples ]
    # To be sorted in decending order after generation.
 '''
-def proportionFilter(cosA, docsA, cosToDocsA, docsToCosA, cosPayments, docsPayments, UPPER_COS_PAYMENT_PROPORTION, UPPER_DOC_PAYMENT_PROPORTION, filename=""):
+def percentileFilter(cosA, docsA, cosToDocsA, docsToCosA, cosPayments, docsPayments, UPPER_COS_PAYMENT_PROPORTION, UPPER_DOC_PAYMENT_PROPORTION, filename=""):
 
    outFile = None
    if filename != "":
@@ -390,6 +390,77 @@ def proportionFilter(cosA, docsA, cosToDocsA, docsToCosA, cosPayments, docsPayme
          docsToCos[d].add(co)
          # TODO write to file
          i += 1
+
+   return cos, docs, cosToDocs, docsToCos, rawTotalPayments
+
+
+'''
+"Proportion" determined by the intersection of edges which meet both
+conditions:
+ 1. Amount > UPPER_COS_PAYMENT_PROPORTION
+ 2. Amount > UPPER_DOC_PAYMENT_PROPORTION
+'''
+def proportionFilter(cosA, docsA, cosToDocsA, docsToCosA, cosPayments, docsPayments, UPPER_COS_PAYMENT_PROPORTION, UPPER_DOC_PAYMENT_PROPORTION):
+
+   cos = dict() # company -> list of payments made
+   docs = dict() # doc/providerId -> list of payments recvd
+   cosToDocs = dict() # company -> set of doctors paid
+   docsToCos = dict() # doctor -> set of companies recvd from
+   rawTotalPayments = 0.
+   #cosPayments = dict()  # company -> list[ (payment, doc) tuples ]
+   #docsPayments = dict() # doctor -> list[ (payment, co) tuples ]
+
+   # Total payments to each doc
+   cosThresh = dict()  # companyId -> threshold$
+   for c in cosA:
+      cosThresh[c] = sum(cosA[c]) * UPPER_COS_PAYMENT_PROPORTION
+   # Total payments from each company
+   docsThresh = dict() # docId -> threshold$
+   for d in docsA:
+      docsThresh[d] = sum(docsA[d]) * UPPER_DOC_PAYMENT_PROPORTION
+   # The above are thresholds (individual total * _PROPORTION)
+
+   # Candidate sets
+   # Each set is a triple: (company, doctor, amount)
+   docsCand = set() # candidates from doc perspective
+   cosCand = set() # candidates from cos perspective
+
+   # Company thresholds
+   for co in cosPayments:
+      paylist = cosPayments[co]
+      for i in paylist:
+         payment = i[0]
+         d = i[1]
+         if payment >= cosThresh[co]:
+            cosCand.add( (co, d, payment) )
+
+   # Doctor thresholds
+   for d in docsPayments:
+      paylist = docsPayments[d]
+      for i in paylist:
+         payment = i[0]
+         co = i[1]
+         if payment >= docsThresh[d]:
+            docsCand.add( (co, d, payment) )
+
+   # Perform set intersection to find the actuals payments to keep.
+   actuals = cosCand.intersection(docsCand)
+
+   for a in actuals:
+      co = a[0]
+      d = a[1]
+      payment = a[2]
+      rawTotalPayments += payment
+      if co not in cos:
+         cos[co] = []
+         cosToDocs[co] = set()
+      if d not in docs:
+         docs[d] = []
+         docsToCos[d] = set()
+      cos[co].append(payment)
+      docs[d].append(payment)
+      cosToDocs[co].add(d)
+      docsToCos[d].add(co)
 
    return cos, docs, cosToDocs, docsToCos, rawTotalPayments
 
