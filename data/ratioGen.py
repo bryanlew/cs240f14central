@@ -278,8 +278,8 @@ def writeDocDoc(cosToDocs, filePrefix=""):
    edges = set() # set of pairs (companyID, companyID), lower integer
    # of the tuple comes first
    for c in cosToDocs:
-      print "d"
       combEdges = list(itertools.combinations(cosToDocs[c],2))
+      print "writeDocDoc edges %d" %(len(combEdges))
       for e in combEdges:
          edges.add(( min(e[0],e[1]), max(e[0],e[1]) ))
 
@@ -297,8 +297,8 @@ def writeCoCo(docsToCos, filePrefix=""):
    edges = set() # set of pairs (companyID, companyID), lower integer
    # of the tuple comes first
    for d in docsToCos:
-      #print "."
       combEdges = list(itertools.combinations(docsToCos[d],2))
+      print "writeCoCo edges %d" %(len(combEdges))
       for e in combEdges:
          edges.add(( min(e[0],e[1]), max(e[0],e[1]) ))
 
@@ -498,10 +498,16 @@ def proportionTrim(filename):
 
    #UPPER_COS_PAYMENT_PROPORTION = 0.0  # top 10%
    #UPPER_DOC_PAYMENT_PROPORTION = 0.25  # top 25%
-   for UPPER_COS_PAYMENT_PROPORTION in [0.25, 0.10, 0.01, 0.0]:
-      for UPPER_DOC_PAYMENT_PROPORTION in [0.10, 0.15, 0.20, 0.25, 0.33]:
+   #for UPPER_COS_PAYMENT_PROPORTION in [0.25, 0.10, 0.01, 0.0]:
+   for UPPER_COS_PAYMENT_PROPORTION in [0.001]:
+      #for UPPER_DOC_PAYMENT_PROPORTION in [0.10, 0.15, 0.20, 0.25, 0.33]:
+      for UPPER_DOC_PAYMENT_PROPORTION in [0.10]:
          print "CO: "+str(UPPER_COS_PAYMENT_PROPORTION)+" DOC: "+str(UPPER_DOC_PAYMENT_PROPORTION)
          cos, docs, cosToDocs, docsToCos, rawTotalPayments = proportionFilter(cosR, docsR, cosToDocsR, docsToCosR, cosPaymentsR, docsPaymentsR, UPPER_COS_PAYMENT_PROPORTION, UPPER_DOC_PAYMENT_PROPORTION, True)
+         # Write the snap-ready doc-doc and co-co networks
+         descr = "_prop_doc_"+str(UPPER_DOC_PAYMENT_PROPORTION)+"_co_"+str(UPPER_COS_PAYMENT_PROPORTION)
+         writeCoCo(docsToCos, "company_company"+descr)
+         writeDocDoc(cosToDocs, "doc_doc"+descr)
 
    '''
    MIN_DOC_K = 3
