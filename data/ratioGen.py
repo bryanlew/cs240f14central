@@ -400,7 +400,7 @@ conditions:
  1. Amount > UPPER_COS_PAYMENT_PROPORTION
  2. Amount > UPPER_DOC_PAYMENT_PROPORTION
 '''
-def proportionFilter(cosA, docsA, cosToDocsA, docsToCosA, cosPayments, docsPayments, UPPER_COS_PAYMENT_PROPORTION, UPPER_DOC_PAYMENT_PROPORTION):
+def proportionFilter(cosA, docsA, cosToDocsA, docsToCosA, cosPayments, docsPayments, UPPER_COS_PAYMENT_PROPORTION, UPPER_DOC_PAYMENT_PROPORTION, writeCSV=False):
 
    cos = dict() # company -> list of payments made
    docs = dict() # doc/providerId -> list of payments recvd
@@ -446,10 +446,19 @@ def proportionFilter(cosA, docsA, cosToDocsA, docsToCosA, cosPayments, docsPayme
    # Perform set intersection to find the actuals payments to keep.
    actuals = cosCand.intersection(docsCand)
 
+   outfile = None
+   if writeCSV:
+      # Write the "csv" file.
+      headerline = "Physician_Profile_ID\tApplicable_Manufacturer_or_Applicable_GPO_Making_Payment_ID\tAmount\n"
+      outfile = open("minProportion_doc_"+str(UPPER_DOC_PAYMENT_PROPORTION)+"_co_"+str(UPPER_COS_PAYMENT_PROPORTION)+"_payment_graph_physician_company.csv", "w")
+      outfile.write(headerline)
+
    for a in actuals:
       co = a[0]
       d = a[1]
       payment = a[2]
+      if outfile != None:
+         writeTab(outfile, d, co, payment)
       rawTotalPayments += payment
       if co not in cos:
          cos[co] = []
@@ -461,6 +470,9 @@ def proportionFilter(cosA, docsA, cosToDocsA, docsToCosA, cosPayments, docsPayme
       docs[d].append(payment)
       cosToDocs[co].add(d)
       docsToCos[d].add(co)
+
+   if outfile != None:
+      outfile.close()
 
    return cos, docs, cosToDocs, docsToCos, rawTotalPayments
 
@@ -483,10 +495,10 @@ def proportionTrim(filename):
    # First pass, no filters.
    cos, docs, cosToDocs, docsToCos, badLines, rawTotalPayments, cosPayments, docsPayments = fileToStructures(filename)
 
-   UPPER_COS_PAYMENT_PROPORTION = 0.25  # top 10%
+   UPPER_COS_PAYMENT_PROPORTION = 0.0  # top 10%
    UPPER_DOC_PAYMENT_PROPORTION = 0.25  # top 25%
 
-   cos, docs, cosToDocs, docsToCos, rawTotalPayments = proportionFilter(cos, docs, cosToDocs, docsToCos, cosPayments, docsPayments, UPPER_COS_PAYMENT_PROPORTION, UPPER_DOC_PAYMENT_PROPORTION)
+   cos, docs, cosToDocs, docsToCos, rawTotalPayments = proportionFilter(cos, docs, cosToDocs, docsToCos, cosPayments, docsPayments, UPPER_COS_PAYMENT_PROPORTION, UPPER_DOC_PAYMENT_PROPORTION, True)
 
    '''
    MIN_DOC_K = 3
