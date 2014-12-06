@@ -493,12 +493,15 @@ def proportionTrim(filename):
 
    #rawTotalPayments = 0.
    # First pass, no filters.
-   cos, docs, cosToDocs, docsToCos, badLines, rawTotalPayments, cosPayments, docsPayments = fileToStructures(filename)
+   cosR, docsR, cosToDocsR, docsToCosR, badLines, rawTotalPaymentsR, cosPaymentsR, docsPaymentsR = fileToStructures(filename)
 
-   UPPER_COS_PAYMENT_PROPORTION = 0.0  # top 10%
-   UPPER_DOC_PAYMENT_PROPORTION = 0.25  # top 25%
 
-   cos, docs, cosToDocs, docsToCos, rawTotalPayments = proportionFilter(cos, docs, cosToDocs, docsToCos, cosPayments, docsPayments, UPPER_COS_PAYMENT_PROPORTION, UPPER_DOC_PAYMENT_PROPORTION, True)
+   #UPPER_COS_PAYMENT_PROPORTION = 0.0  # top 10%
+   #UPPER_DOC_PAYMENT_PROPORTION = 0.25  # top 25%
+   for UPPER_COS_PAYMENT_PROPORTION in [0.25, 0.10, 0.01, 0.0]:
+      for UPPER_DOC_PAYMENT_PROPORTION in [0.10, 0.15, 0.20, 0.25, 0.33]:
+         print "CO: "+str(UPPER_COS_PAYMENT_PROPORTION)+" DOC: "+str(UPPER_DOC_PAYMENT_PROPORTION)
+         cos, docs, cosToDocs, docsToCos, rawTotalPayments = proportionFilter(cosR, docsR, cosToDocsR, docsToCosR, cosPaymentsR, docsPaymentsR, UPPER_COS_PAYMENT_PROPORTION, UPPER_DOC_PAYMENT_PROPORTION, True)
 
    '''
    MIN_DOC_K = 3
