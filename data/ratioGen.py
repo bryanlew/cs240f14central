@@ -179,6 +179,8 @@ Returns:
    docsToCos = dict() # doctor -> set of companies recvd from
    badLines = [] # integer of bad line numbers in data
    rawTotalPayments = 0.
+   cosPayments = dict()  # company -> list[ (payment, doc) tuples ]
+   docsPayments = dict() # doctor -> list[ (payment, co) tuples ]
 '''
 def fileToStructures(filename, skipCos=None, skipDocs=None, fileOutPrefix="", MIN_PAYMENT=float('-inf')):
    outFile = None
@@ -196,6 +198,8 @@ def fileToStructures(filename, skipCos=None, skipDocs=None, fileOutPrefix="", MI
    docs = dict() # doc/providerId -> list of payments recvd
    cosToDocs = dict() # company -> set of doctors paid
    docsToCos = dict() # doctor -> set of companies recvd from
+   cosPayments = dict()  # company -> list[ (payment, doc) tuples ]
+   docsPayments = dict() # doctor -> list[ (payment, co) tuples ]
    
    with open(filename) as fin:
       for line in fin:
@@ -230,15 +234,19 @@ def fileToStructures(filename, skipCos=None, skipDocs=None, fileOutPrefix="", MI
          if doc not in docs:
             docs[doc] = []
             docsToCos[doc] = set()
+            docsPayments[doc] = []
             NUM_DOCS += 1
          if co not in cos:
             cos[co] = []
             cosToDocs[co] = set()
+            cosPayments[co] = []
             NUM_COS += 1
          docs[doc].append(amount)
          cos[co].append(amount)
          docsToCos[doc].add(co)
          cosToDocs[co].add(doc)
+         docsPayments[doc].append( (amount, co) )
+         cosPayments[co].append( (amount, doc) )
          rawTotalPayments += amount
          #print doc, " ", co, " ", amount
          if outFile is not None:
@@ -252,7 +260,12 @@ def fileToStructures(filename, skipCos=None, skipDocs=None, fileOutPrefix="", MI
       assert(NUM_COS == len(cos))
       assert(NUM_DOCS == len(docs))
 
-   return cos, docs, cosToDocs, docsToCos, badLines, rawTotalPayments
+   for c in cosPayments:
+      cosPayments[c].sort(reverse=True)
+   for d in docsPayments:
+      docsPayments[d].sort(reverse=True)
+
+   return cos, docs, cosToDocs, docsToCos, badLines, rawTotalPayments, cosPayments, docsPayments
 
 
 '''
@@ -298,8 +311,90 @@ def writeCoCo(docsToCos, filePrefix=""):
       for e in edges:
          writeTab(fout, e[0], e[1])
 
+'''
+Filter out payments/links based on the proportion of total payments.
+   #cos = dict() # company -> list of payments made
+   #docs = dict() # doc/providerId -> list of payments recvd
+   #cosToDocs = dict() # company -> set of doctors paid
+   #docsToCos = dict() # doctor -> set of companies recvd from
 
-def k3Trim(filename):
+   # Tertiary structures (used for proportion calculations)
+   #cosPayments = dict()  # company -> list[ (payment, doc) tuples ]
+   #docsPayments = dict() # doctor -> list[ (payment, co) tuples ]
+   # To be sorted in decending order after generation.
+'''
+def proportionFilter(cosA, docsA, cosToDocsA, docsToCosA, cosPayments, docsPayments, UPPER_COS_PAYMENT_PROPORTION, UPPER_DOC_PAYMENT_PROPORTION, filename=""):
+
+   outFile = None
+   if filename != "":
+      outFile = open(filename, "w")
+
+   cos = dict() # company -> list of payments made
+   docs = dict() # doc/providerId -> list of payments recvd
+   cosToDocs = dict() # company -> set of doctors paid
+   docsToCos = dict() # doctor -> set of companies recvd from
+   rawTotalPayments = 0.
+
+   # Total payments to each doc
+   cosThresh = dict()  # companyId -> threshold$
+   for c in cosA:
+      cosThresh[c] = sum(cosA[c]) * UPPER_COS_PAYMENT_PROPORTION
+   # Total payments from each company
+   docsThresh = dict() # docId -> threshold$
+   for d in docsA:
+      docsThresh[d] = sum(docsA[d]) * UPPER_DOC_PAYMENT_PROPORTION
+   # The above are thresholds (individual total * _PROPORTION)
+
+   # Company thresholds
+   for co in cosPayments:
+      paylist = cosPayments[co]
+      totalpaid = 0.
+      i = 0
+      while i < len(paylist) and totalpaid < cosThresh[co]:
+         payment = paylist[i][0]
+         d = paylist[i][1]
+         totalpaid += payment
+         rawTotalPayments += payment
+         if co not in cos:
+            cos[co] = []
+            cosToDocs[co] = set()
+         if d not in docs:
+            docs[d] = []
+            docsToCos[d] = set()
+         cos[co].append(payment)
+         docs[d].append(payment)
+         cosToDocs[co].add(d)
+         docsToCos[d].add(co)
+         # TODO write to file
+         i += 1
+
+   # Doctor thresholds
+   for d in docsPayments:
+      paylist = docsPayments[d]
+      totalpaid = 0.
+      i = 0
+      while i < len(paylist) and totalpaid < docsThresh[d]:
+         payment = paylist[i][0]
+         co = paylist[i][1]
+         totalpaid += payment
+         rawTotalPayments += payment
+         if co not in cos:
+            cos[co] = []
+            cosToDocs[co] = set()
+         if d not in docs:
+            docs[d] = []
+            docsToCos[d] = set()
+         cos[co].append(payment)
+         docs[d].append(payment)
+         cosToDocs[co].add(d)
+         docsToCos[d].add(co)
+         # TODO write to file
+         i += 1
+
+   return cos, docs, cosToDocs, docsToCos, rawTotalPayments
+
+
+def proportionTrim(filename):
    # Core structures
    #cos = dict() # company -> list of payments made
    #docs = dict() # doc/providerId -> list of payments recvd
@@ -308,10 +403,21 @@ def k3Trim(filename):
    #cosToDocs = dict() # company -> set of doctors paid
    #docsToCos = dict() # doctor -> set of companies recvd from
 
+   # Tertiary structures (used for proportion calculations)
+   #cosPayments = dict()  # company -> list[ (payment, doc) tuples ]
+   #docsPayments = dict() # doctor -> list[ (payment, co) tuples ]
+   # To be sorted in decending order after generation.
+
    #rawTotalPayments = 0.
    # First pass, no filters.
-   cosA, docsA, cosToDocsA, docsToCosA, badLinesA, rawTotalPaymentsA = fileToStructures(filename)
+   cos, docs, cosToDocs, docsToCos, badLines, rawTotalPayments, cosPayments, docsPayments = fileToStructures(filename)
 
+   UPPER_COS_PAYMENT_PROPORTION = 0.25  # top 10%
+   UPPER_DOC_PAYMENT_PROPORTION = 0.25  # top 25%
+
+   cos, docs, cosToDocs, docsToCos, rawTotalPayments = proportionFilter(cos, docs, cosToDocs, docsToCos, cosPayments, docsPayments, UPPER_COS_PAYMENT_PROPORTION, UPPER_DOC_PAYMENT_PROPORTION)
+
+   '''
    MIN_DOC_K = 3
    MIN_CO_K = 3
    # Filter data
@@ -323,20 +429,22 @@ def k3Trim(filename):
    for c in cosToDocsA:
       if len(cosToDocsA[c]) < MIN_CO_K:
          removeCos.add(c)
+   '''
 
-   MIN_PAYMENT = 1000.  # filter out any payments less than this
-   print "======= k removals ========"
-   print "Removed docs with < " + str(MIN_DOC_K) + " payments recvd"
-   print "Removed companies with < " + str(MIN_CO_K) + " payments made"
-   print "docs removed: ", len(removeDocs)
-   print "cos removed: ", len(removeCos)
-   print "Removed payments less than " + str(MIN_PAYMENT)
+   #MIN_PAYMENT = 1000.  # filter out any payments less than this
+   print "======= proportional removals ========"
+   #print "Removed docs with < " + str(MIN_DOC_K) + " payments recvd"
+   #print "Removed companies with < " + str(MIN_CO_K) + " payments made"
+   #print "docs removed: ", len(removeDocs)
+   #print "cos removed: ", len(removeCos)
+   #print "Removed payments less than " + str(MIN_PAYMENT)
 
    # Second pass, filter and output a new "input" file.
 #def fileToStructures(filename, skipCos=None, skipDocs=None, fileOutPrefix=""):
+   '''
    filePrefix = "minK_doc_"+str(MIN_DOC_K)+"_co_"+str(MIN_CO_K)+"_"
    cos, docs, cosToDocs, docsToCos, badLines, rawTotalPayments = fileToStructures(filename, removeCos, removeDocs, filePrefix, MIN_PAYMENT)
-   
+   '''
 
    print "==== Results ===="
    print "Bad lines in file (lines excluded): %d" %(len(badLines))
@@ -360,7 +468,7 @@ def k3Trim(filename):
    print "Num payments (good lines): %d" %(numPayments)
 
    #writeCoCo(docsToCos, "company_company_k3_1000")
-   writeDocDoc(cosToDocs, "doc_doc_k3_1000")
+   #writeDocDoc(cosToDocs, "doc_doc_k3_1000")
 
 
    cosPaymentCountHist = genPaymentCountHistogram(cos)
@@ -431,4 +539,4 @@ def k3Trim(filename):
 if __name__ == "__main__":
    "Generating statistics"
    filename = "payment_graph_physician_company.csv"
-   k3Trim(filename)
+   proportionTrim(filename)
